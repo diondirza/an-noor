@@ -11,12 +11,13 @@ import {
 } from '~/services/quran';
 
 const searchSchema = z.object({
-	page: z.number().int().positive().catch(1),
+	page: z.coerce.number().int().positive().catch(1),
 });
 
 export const Route = createFileRoute('/quran/$surahId')({
 	validateSearch: (search) => searchSchema.parse(search),
-	loader: async ({ params, context, search }) => {
+	loaderDeps: ({ search: { page } }) => ({ page }),
+	loader: async ({ params, context, deps: { page } }) => {
 		const surahId = Number(params.surahId);
 		if (Number.isNaN(surahId) || surahId < 1 || surahId > 114) {
 			throw notFound();
@@ -29,8 +30,8 @@ export const Route = createFileRoute('/quran/$surahId')({
 				staleTime: 1000 * 60 * 60,
 			}),
 			context.queryClient.ensureQueryData({
-				queryKey: quranKeys.verses(surahId, search.page),
-				queryFn: () => fetchVersesByChapter(surahId, search.page),
+				queryKey: quranKeys.verses(surahId, page),
+				queryFn: () => fetchVersesByChapter(surahId, page),
 			}),
 		]);
 
