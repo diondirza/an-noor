@@ -1,89 +1,57 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import SurahCard from '~/components/quran/SurahCard';
+import { SITE_URL } from '~/lib/site';
+import { fetchChapters, quranKeys } from '~/services/quran';
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({
+	loader: ({ context }) =>
+		context.queryClient.ensureQueryData({
+			queryKey: quranKeys.chapters(),
+			queryFn: fetchChapters,
+			staleTime: 1000 * 60 * 60,
+		}),
+	head: () => ({
+		meta: [
+			{ title: 'Quran — An-Noor' },
+			{
+				name: 'description',
+				content:
+					'Read all 114 surahs of the Holy Quran with Arabic text and English translation.',
+			},
+		],
+		links: [{ rel: 'canonical', href: SITE_URL }],
+	}),
+	component: QuranIndex,
+});
 
-function App() {
-  return (
-    <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-(--sea-ink) sm:text-6xl">
-          Island hours, but for product teams.
-        </h1>
-        <p className="mb-8 max-w-2xl text-base text-(--sea-ink-soft) sm:text-lg">
-          A tropical, breathable app starter with full-document SSR, server
-          functions, streaming, and type-safe routing. Calm on the eyes. Fast in
-          production.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/blog"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-(--lagoon-deep) no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-          >
-            Explore Posts
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 text-sm font-semibold text-(--sea-ink) no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
-          >
-            Router Guide
-          </a>
-        </div>
-      </section>
+function QuranIndex() {
+	const { data } = useQuery({
+		queryKey: quranKeys.chapters(),
+		queryFn: fetchChapters,
+		staleTime: 1000 * 60 * 60,
+	});
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [
-            'Type-Safe Routing',
-            'Routes and links stay in sync across every page.',
-          ],
-          [
-            'Server Functions',
-            'Call server code from your UI without creating API boilerplate.',
-          ],
-          [
-            'Streaming by Default',
-            'Ship progressively rendered responses for faster experiences.',
-          ],
-          [
-            'Tailwind Native',
-            'Design quickly with utility-first styling and custom tokens.',
-          ],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 text-base font-semibold text-(--sea-ink)">
-              {title}
-            </h2>
-            <p className="m-0 text-sm text-(--sea-ink-soft)">{desc}</p>
-          </article>
-        ))}
-      </section>
+	const chapters = data?.chapters ?? [];
 
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">Quick Start</p>
-        <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-(--sea-ink-soft)">
-          <li>
-            Edit <code>src/routes/index.tsx</code> to customize the hero and
-            product narrative.
-          </li>
-          <li>
-            Update <code>src/components/Header.tsx</code> and{' '}
-            <code>src/components/Footer.tsx</code> for brand links.
-          </li>
-          <li>
-            Add routes in <code>src/routes</code> and tweak visual tokens in{' '}
-            <code>src/styles.css</code>.
-          </li>
-        </ul>
-      </section>
-    </main>
-  )
+	return (
+		<main className="page-wrap px-4 pt-14 pb-12">
+			<header className="rise-in mb-10 text-center">
+				<p className="island-kicker mb-2">The Holy Quran</p>
+				<h1 className="display-title m-0 text-3xl sm:text-4xl">
+					Browse Surahs
+				</h1>
+				<p className="mx-auto mt-3 max-w-lg text-(--sea-ink-soft) text-sm">
+					All 114 surahs of the Quran. Select a surah to read its verses with
+					English translation.
+				</p>
+			</header>
+
+			<div className="rise-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				{chapters.map((chapter) => (
+					<SurahCard key={chapter.id} chapter={chapter} />
+				))}
+			</div>
+		</main>
+	);
 }
